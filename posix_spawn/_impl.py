@@ -94,8 +94,16 @@ def posix_spawn(path, args, env=None, file_actions=None, attributes=None):
 
     arg_list = [ffi.new("char[]", arg) for arg in args] + [ffi.NULL]
 
-    env_list = [ffi.new("char[]", b"=".join([key, value]))
-                for key, value in env.items()] + [ffi.NULL]
+    env_list = []
+
+    for key, value in env.items():
+        try:
+            env_list.append(ffi.new("char[]", b"=".join([key, value])))
+        except TypeError:
+            # Only include ascii environment variables
+            pass
+
+    env_list = env_list + [ffi.NULL]
 
     res = lib.posix_spawn(
         pid,

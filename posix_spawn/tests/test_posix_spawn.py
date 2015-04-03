@@ -76,6 +76,38 @@ class TestPosixSpawn(object):
         assert exits(pid) == 0
         assert "environment" == envfile.read()
 
+    def test_ascii_env(self):
+            env = {b"unichar": u"\u0a3c", b"myvar": b"isawesome"}
+            fa = FileActions()
+            pid = posix_spawn(
+                executable,
+                [executable,
+                b'-c',
+                textwrap.dedent("""
+                import os
+                assert os.environ['myvar'] == 'isawesome'
+                """).encode('ascii')],
+                env=env,
+                file_actions=fa
+            )
+            assert exits(pid) == 0
+
+    def test_non_ascii_env(self):
+            env = {b"unichar": u"\u0a3c", b"myvar": b"isawesome"}
+            fa = FileActions()
+            pid = posix_spawn(
+                executable,
+                [executable,
+                b'-c',
+                textwrap.dedent("""
+                import os
+                os.environ['unichar']
+                """).encode('ascii')],
+                env=env,
+                file_actions=fa
+            )
+            assert exits(pid) == 1
+
 
 class TestFileActions(object):
     def test_empty_actions(self):
